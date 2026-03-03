@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Sovereign Tunnel — Build Your Own Free Private VPN in 2026</title>
+  <meta name="description" content="The UK government now wants to know who you are before you can use a VPN. We built the exit ramp. A complete guide to building your own private, encrypted tunnel — hosted for free, owned by you." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cyber: '#00c8ff',
+            cyberDim: '#0099cc',
+            cyberGlow: '#00e5ff',
+            ink: '#080c12',
+            inkLight: '#0d1420',
+            inkMid: '#111827',
+            amber: '#f97316',
+            slate: '#94a3b8',
+          },
+          fontFamily: {
+            display: ['Bebas Neue', 'sans-serif'],
+            condensed: ['Barlow Condensed', 'sans-serif'],
+            body: ['Barlow', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      background-color: #080c12;
+      font-family: 'Barlow', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* Animated scan line */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -100%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,200,255,0.15), transparent);
+      animation: scanline 8s linear infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes scanline {
+      0% { top: -2px; }
+      100% { top: 100%; }
+    }
+
+    /* Grid background */
+    .grid-bg {
+      background-image: 
+        linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* Glow effects */
+    .glow-cyan {
+      text-shadow: 0 0 30px rgba(0,200,255,0.5), 0 0 60px rgba(0,200,255,0.2);
+    }
+
+    .glow-box {
+      box-shadow: 0 0 0 1px rgba(0,200,255,0.2), 0 0 40px rgba(0,200,255,0.08), inset 0 0 40px rgba(0,200,255,0.02);
+    }
+
+    .glow-box-hover:hover {
+      box-shadow: 0 0 0 1px rgba(0,200,255,0.4), 0 0 60px rgba(0,200,255,0.15), inset 0 0 40px rgba(0,200,255,0.05);
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
+
+    /* Button glow */
+    .btn-cyber {
+      background: linear-gradient(135deg, #00c8ff, #0099cc);
+      box-shadow: 0 0 30px rgba(0,200,255,0.4), 0 4px 20px rgba(0,0,0,0.4);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-cyber::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn-cyber:hover::before { left: 100%; }
+
+    .btn-cyber:hover {
+      box-shadow: 0 0 50px rgba(0,200,255,0.6), 0 8px 30px rgba(0,0,0,0.5);
+      transform: translateY(-2px);
+    }
+
+    /* Diagonal accent line */
+    .diagonal-line {
+      position: relative;
+    }
+    .diagonal-line::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #00c8ff, transparent);
+    }
+
+    /* Book mockup */
+    .book-wrap {
+      perspective: 1200px;
+    }
+
+    .book-3d {
+      transform: rotateY(-18deg) rotateX(4deg);
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+      filter: drop-shadow(-20px 20px 40px rgba(0,0,0,0.8)) drop-shadow(0 0 40px rgba(0,200,255,0.2));
+    }
+
+    .book-3d:hover {
+      transform: rotateY(-10deg) rotateX(2deg);
+    }
+
+    /* Animated entrance */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .animate-fade-up { animation: fadeUp 0.8s ease forwards; }
+    .animate-fade-up-delay-1 { animation: fadeUp 0.8s ease 0.15s forwards; opacity: 0; }
+    .animate-fade-up-delay-2 { animation: fadeUp 0.8s ease 0.3s forwards; opacity: 0; }
+    .animate-fade-up-delay-3 { animation: fadeUp 0.8s ease 0.45s forwards; opacity: 0; }
+    .animate-fade-in { animation: fadeIn 1.2s ease 0.6s forwards; opacity: 0; }
+
+    /* Cyber divider */
+    .cyber-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,200,255,0.4), transparent);
+    }
+
+    /* Number accent */
+    .stat-number {
+      font-family: 'Bebas Neue', sans-serif;
+      background: linear-gradient(135deg, #00c8ff, #00e5ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Amber accent */
+    .amber-glow {
+      color: #f97316;
+      text-shadow: 0 0 20px rgba(249,115,22,0.4);
+    }
+
+    /* Method card */
+    .method-card {
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .method-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(0,200,255,0.3), transparent, rgba(0,200,255,0.1));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+
+    .method-card:hover {
+      transform: translateY(-4px);
+      background: rgba(0,200,255,0.06) !important;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #080c12; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.3); border-radius: 3px; }
+
+    /* Top bar */
+    .top-bar {
+      background: linear-gradient(90deg, rgba(0,200,255,0.1), rgba(0,200,255,0.05), transparent);
+      border-bottom: 1px solid rgba(0,200,255,0.15);
+    }
+  </style>
+</head>
+
+<body class="text-white">
+
+  <!-- TOP STATUS BAR -->
+  <div class="top-bar px-6 py-2 text-xs font-condensed tracking-widest text-cyber/70 uppercase flex items-center justify-between">
+    <span>Renegade Publications · Est. 2026</span>
+    <span class="flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse"></span>
+      Secure Connection Active
+    </span>
+  </div>
+
+  <!-- HERO -->
+  <section class="relative min-h-screen grid-bg flex items-center overflow-hidden">
+
+    <!-- Background glow blobs -->
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-5" style="background: radial-gradient(circle, #00c8ff, transparent)"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full blur-3xl opacity-8" style="background: radial-gradient(circle, #0099cc, transparent)"></div>
+    <div class="absolute top-1/2 right-1/3 w-48 h-48 rounded-full blur-2xl opacity-5" style="background: radial-gradient(circle, #f97316, transparent)"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 py-24 w-full">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+        <!-- Left: Copy -->
+        <div>
+          <!-- Eyebrow -->
+          <div class="animate-fade-up flex items-center gap-3 mb-8">
+            <div class="h-px w-12 bg-cyber"></div>
+            <span class="font-condensed text-cyber tracking-widest uppercase text-sm">Renegade Publications · 2026</span>
+          </div>
+
+          <!-- Headline -->
+          <h1 class="animate-fade-up-delay-1 font-display leading-none mb-6" style="font-size: clamp(3rem, 7vw, 6rem);">
+            <span class="block text-white">THE</span>
+            <span class="block glow-cyan" style="color: #00c8ff;">SOVEREIGN</span>
+            <span class="block text-white">TUNNEL</span>
+          </h1>
+
+          <!-- Subhead -->
+          <p class="animate-fade-up-delay-2 font-body text-slate text-lg lg:text-xl leading-relaxed mb-4 max-w-xl" style="font-weight: 300;">
+            The UK government now wants your <span class="text-white font-medium">passport, face scan, and bank details</span> before you can use a commercial VPN.
+          </p>
+          <p class="animate-fade-up-delay-2 font-body text-slate text-lg lg:text-xl leading-relaxed mb-10 max-w-xl" style="font-weight: 300;">
+            This is the exit ramp. Build your own free, private, encrypted tunnel — owned by you, invisible to everyone else.
+          </p>
+
+          <!-- Tagline pills -->
+          <div class="animate-fade-up-delay-2 flex flex-wrap gap-3 mb-10">
+            <span class="font-condensed text-sm tracking-wider uppercase px-4 py-2 rounded border border-cyber/30 text-cyber/80 bg-cyber/5">£0.00/month hosting</span>
+            <span class="font-condensed text-sm tracking-wider uppercase px-4 py-2 rounded border border-cyber/30 text-cyber/80 bg-cyber/5">No KYC required</span>
+            <span class="font-condensed text-sm tracking-wider uppercase px-4 py-2 rounded border border-cyber/30 text-cyber/80 bg-cyber/5">UK-focused guide</span>
+            <span class="font-condensed text-sm tracking-wider uppercase px-4 py-2 rounded border border-cyber/30 text-cyber/80 bg-cyber/5">3 methods covered</span>
+          </div>
+
+         <!-- CTA -->
+<div class="animate-fade-up-delay-3 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+  <a href="https://payhip.com/b/g5xdw"
+     class="payhip-buy-button btn-cyber block w-full font-condensed font-semibold tracking-widest uppercase text-ink text-xl py-5 rounded-lg text-center"
+     data-theme="none"
+     data-product="g5xdw">
+    Get Instant Access — £15
+  </a>
+
+            <div class="text-sm text-slate font-body" style="font-weight: 300;">
+              Instant PDF download<br>
+              <span class="text-cyber/60">Verified · Payhip Secure Checkout</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Book Mockup -->
+<div class="animate-fade-in flex justify-center lg:justify-end">
+  <div class="book-wrap">
+    <div class="book-3d">
+      <div class="relative rounded-sm overflow-hidden" style="width: 300px; height: 420px;">
+        <img 
+          src="https://res.cloudinary.com/dragon-fire-design-studio/image/upload/f_auto,q_90/v1772528114/Sovereign%20Tunnel/sovereign-tunnel_phqjig.png"
+          alt="The Sovereign Tunnel ebook cover"
+          class="w-full h-full object-cover"
+        />
+        <!-- Spine effect -->
+        <div class="absolute inset-y-0 left-0 w-4" style="background: linear-gradient(90deg, rgba(0,0,0,0.5), transparent); border-left: 3px solid rgba(0,200,255,0.3);"></div>
+        <!-- Shine -->
+        <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cyber-divider"></div>
+
+  <!-- THE PROBLEM -->
+  <section class="relative py-24 overflow-hidden" style="background: #0a0f18;">
+    <div class="absolute inset-0 grid-bg opacity-30"></div>
+    <div class="relative z-10 max-w-6xl mx-auto px-6 lg:px-12">
+
+      <div class="text-center mb-16">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <div class="h-px w-12 bg-amber-500 opacity-60"></div>
+          <span class="font-condensed text-amber-500 tracking-widest uppercase text-sm">The Problem</span>
+          <div class="h-px w-12 bg-amber-500 opacity-60"></div>
+        </div>
+        <h2 class="font-display text-5xl lg:text-6xl text-white mb-6">
+          THE VPN PARADOX
+        </h2>
+        <p class="font-body text-slate text-lg max-w-2xl mx-auto" style="font-weight: 300;">
+          Following a 1,300% surge in VPN usage, the government began formal consultation into closing the loophole. Here's what's happening right now.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6 mb-16">
+        <div class="glow-box glow-box-hover rounded p-8" style="background: rgba(13,20,32,0.8);">
+          <div class="stat-number text-6xl mb-3">01</div>
+          <h3 class="font-condensed font-semibold text-xl text-white mb-3 tracking-wide">The Online Safety Act</h3>
+          <p class="font-body text-slate text-sm leading-relaxed" style="font-weight: 300;">Full implementation forces commercial VPNs to introduce age-verification and Know Your Customer protocols for UK users.</p>
+        </div>
+        <div class="glow-box glow-box-hover rounded p-8" style="background: rgba(13,20,32,0.8);">
+          <div class="stat-number text-6xl mb-3">02</div>
+          <h3 class="font-condensed font-semibold text-xl text-white mb-3 tracking-wide">The Identity Trap</h3>
+          <p class="font-body text-slate text-sm leading-relaxed" style="font-weight: 300;">To buy privacy from your ISP, you must hand your passport, face scan, or bank details to a third-party VPN company. The "no-logs" promise becomes meaningless.</p>
+        </div>
+        <div class="glow-box glow-box-hover rounded p-8" style="background: rgba(13,20,32,0.8);">
+          <div class="stat-number text-6xl mb-3">03</div>
+          <h3 class="font-condensed font-semibold text-xl text-white mb-3 tracking-wide">The Exit Ramp</h3>
+          <p class="font-body text-slate text-sm leading-relaxed" style="font-weight: 300;">Self-hosted VPNs operate outside this framework entirely. You're not a customer in a database. You're the administrator of your own private infrastructure.</p>
+        </div>
+      </div>
+
+      <!-- ISP quote block -->
+      <div class="border-l-4 border-cyber pl-8 py-2 max-w-3xl mx-auto">
+        <p class="font-body text-xl text-white mb-3 italic" style="font-weight: 300;">"Your ISP keeps a log of every site you visit. In the UK, they are legally required to store this metadata for 12 months."</p>
+        <p class="font-condensed text-cyber text-sm tracking-wider uppercase">— The Sovereign Tunnel, Chapter 1</p>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="cyber-divider"></div>
+
+  <!-- WHAT'S INSIDE -->
+  <section class="relative py-24" style="background: #080c12;">
+    <div class="max-w-6xl mx-auto px-6 lg:px-12">
+
+      <div class="grid lg:grid-cols-2 gap-16 items-start">
+
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-px w-12 bg-cyber opacity-60"></div>
+            <span class="font-condensed text-cyber tracking-widest uppercase text-sm">What's Inside</span>
+          </div>
+          <h2 class="font-display text-5xl lg:text-6xl text-white mb-6 leading-none">THREE METHODS.<br><span style="color:#00c8ff;">ONE GOAL.</span></h2>
+          <p class="font-body text-slate text-lg leading-relaxed mb-10" style="font-weight: 300; max-width: 480px;">
+            Whether you want total control, a quick setup, or a zero-effort solution, this guide has you covered. No jargon. No assumptions. Step-by-step from sign-up to connected.
+          </p>
+
+          <!-- Chapter list -->
+          <div class="space-y-4">
+            <div class="diagonal-line pl-5 py-1">
+              <div class="font-condensed text-cyber/60 text-xs tracking-widest uppercase mb-1">Chapter 1</div>
+              <div class="font-condensed text-white font-semibold text-lg">Fundamentals — The Why and the How</div>
+            </div>
+            <div class="diagonal-line pl-5 py-1">
+              <div class="font-condensed text-cyber/60 text-xs tracking-widest uppercase mb-1">Chapter 2</div>
+              <div class="font-condensed text-white font-semibold text-lg">The Free Tier Strategy</div>
+            </div>
+            <div class="diagonal-line pl-5 py-1">
+              <div class="font-condensed text-cyber/60 text-xs tracking-widest uppercase mb-1">Chapter 3</div>
+              <div class="font-condensed text-white font-semibold text-lg">Method 1 — Oracle Cloud + PiVPN</div>
+            </div>
+            <div class="diagonal-line pl-5 py-1">
+              <div class="font-condensed text-cyber/60 text-xs tracking-widest uppercase mb-1">Chapter 4</div>
+              <div class="font-condensed text-white font-semibold text-lg">Method 2 — Tailscale Mesh VPN</div>
+            </div>
+            <div class="diagonal-line pl-5 py-1">
+              <div class="font-condensed text-cyber/60 text-xs tracking-widest uppercase mb-1">Chapter 5</div>
+              <div class="font-condensed text-white font-semibold text-lg">Method 3 — Cloudflare One</div>
+            </div>
+            <div class="diagonal-line pl-5 py-1">
+              <div class="font-condensed text-cyber/60 text-xs tracking-widest uppercase mb-1">Chapter 6</div>
+              <div class="font-condensed text-white font-semibold text-lg">Hardening Your Server</div>
+            </div>
+            <div class="diagonal-line pl-5 py-1">
+              <div class="font-condensed text-cyber/60 text-xs tracking-widest uppercase mb-1">Chapter 7</div>
+              <div class="font-condensed text-white font-semibold text-lg">Troubleshooting & Maintenance</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Method cards -->
+        <div class="space-y-5">
+
+          <div class="method-card rounded-lg p-7" style="background: rgba(13,20,32,0.9);">
+            <div class="flex items-start gap-5">
+              <div class="flex-shrink-0 w-12 h-12 rounded flex items-center justify-center" style="background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3);">
+                <svg class="w-6 h-6 text-cyber" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #00c8ff;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+              <div>
+                <div class="font-condensed text-cyber text-xs tracking-widest uppercase mb-2">Method 1 · Pro Setup</div>
+                <h3 class="font-condensed font-semibold text-xl text-white mb-2">Oracle Cloud + PiVPN</h3>
+                <p class="font-body text-slate text-sm leading-relaxed" style="font-weight: 300;">The most powerful option. A permanent, high-speed server with 10TB monthly bandwidth — completely free forever. Best for streaming, total control, and US Netflix.</p>
+                <div class="mt-3 flex gap-2 flex-wrap">
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">24GB RAM</span>
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">10TB/month</span>
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">Free Forever</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="method-card rounded-lg p-7" style="background: rgba(13,20,32,0.9);">
+            <div class="flex items-start gap-5">
+              <div class="flex-shrink-0 w-12 h-12 rounded flex items-center justify-center" style="background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3);">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #00c8ff;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </div>
+              <div>
+                <div class="font-condensed text-cyber text-xs tracking-widest uppercase mb-2">Method 2 · Home Hub</div>
+                <h3 class="font-condensed font-semibold text-xl text-white mb-2">Tailscale Mesh VPN</h3>
+                <p class="font-body text-slate text-sm leading-relaxed" style="font-weight: 300;">Turn your home computer, Raspberry Pi, or Apple TV into your private exit node. Completely regulation-proof — you're connecting your own devices together, not using a commercial VPN service.</p>
+                <div class="mt-3 flex gap-2 flex-wrap">
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">Zero KYC</span>
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">100 Devices</span>
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">Regulation-Proof</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="method-card rounded-lg p-7" style="background: rgba(13,20,32,0.9);">
+            <div class="flex items-start gap-5">
+              <div class="flex-shrink-0 w-12 h-12 rounded flex items-center justify-center" style="background: rgba(0,200,255,0.1); border: 1px solid rgba(0,200,255,0.3);">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #00c8ff;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <div>
+                <div class="font-condensed text-cyber text-xs tracking-widest uppercase mb-2">Method 3 · Zero Effort</div>
+                <h3 class="font-condensed font-semibold text-xl text-white mb-2">Cloudflare One</h3>
+                <p class="font-body text-slate text-sm leading-relaxed" style="font-weight: 300;">One-tap ISP encryption for beginners. No server, no setup, no passwords. Stops your ISP seeing your browsing and bypasses soft blocks — in under two minutes.</p>
+                <div class="mt-3 flex gap-2 flex-wrap">
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">One Tap</span>
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">No Server Needed</span>
+                  <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full" style="background: rgba(0,200,255,0.1); color: rgba(0,200,255,0.8); border: 1px solid rgba(0,200,255,0.2);">Beginner Friendly</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cyber-divider"></div>
+
+  <!-- WHO IT'S FOR -->
+  <section class="relative py-24 grid-bg" style="background: #0a0f18;">
+    <div class="max-w-5xl mx-auto px-6 lg:px-12">
+      <div class="text-center mb-14">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <div class="h-px w-12 bg-cyber opacity-60"></div>
+          <span class="font-condensed text-cyber tracking-widest uppercase text-sm">Who It's For</span>
+          <div class="h-px w-12 bg-cyber opacity-60"></div>
+        </div>
+        <h2 class="font-display text-5xl lg:text-6xl text-white">THIS IS FOR YOU IF...</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="flex items-start gap-4 p-6 rounded" style="background: rgba(13,20,32,0.6);">
+          <span class="text-cyber text-2xl flex-shrink-0">→</span>
+          <p class="font-body text-slate leading-relaxed" style="font-weight: 300;">You're worried about the UK's expanding surveillance of your browsing activity and want to do something about it.</p>
+        </div>
+        <div class="flex items-start gap-4 p-6 rounded" style="background: rgba(13,20,32,0.6);">
+          <span class="text-cyber text-2xl flex-shrink-0">→</span>
+          <p class="font-body text-slate leading-relaxed" style="font-weight: 300;">You're paying £8–£12/month for a commercial VPN and are uncomfortable with new identity verification demands.</p>
+        </div>
+        <div class="flex items-start gap-4 p-6 rounded" style="background: rgba(13,20,32,0.6);">
+          <span class="text-cyber text-2xl flex-shrink-0">→</span>
+          <p class="font-body text-slate leading-relaxed" style="font-weight: 300;">You're not technical — but you can follow a recipe. If you can bake a cake, you can build this VPN.</p>
+        </div>
+        <div class="flex items-start gap-4 p-6 rounded" style="background: rgba(13,20,32,0.6);">
+          <span class="text-cyber text-2xl flex-shrink-0">→</span>
+          <p class="font-body text-slate leading-relaxed" style="font-weight: 300;">You want to access geo-restricted content, secure your connection on public Wi-Fi, or keep your home network private.</p>
+        </div>
+        <div class="flex items-start gap-4 p-6 rounded" style="background: rgba(13,20,32,0.6);">
+          <span class="text-cyber text-2xl flex-shrink-0">→</span>
+          <p class="font-body text-slate leading-relaxed" style="font-weight: 300;">You believe your browsing history is nobody else's business — not your ISP's, not the government's, not a VPN company's.</p>
+        </div>
+        <div class="flex items-start gap-4 p-6 rounded" style="background: rgba(13,20,32,0.6);">
+          <span class="text-cyber text-2xl flex-shrink-0">→</span>
+          <p class="font-body text-slate leading-relaxed" style="font-weight: 300;">You want to move from being a passive "User" of the internet to the Sovereign administrator of your own private infrastructure.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cyber-divider"></div>
+
+  <!-- BUY SECTION -->
+  <section id="buy" class="relative py-28 overflow-hidden" style="background: #080c12;">
+
+    <!-- Background glow -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="w-96 h-96 rounded-full blur-3xl" style="background: radial-gradient(circle, rgba(0,200,255,0.08), transparent)"></div>
+    </div>
+
+    <div class="relative z-10 max-w-3xl mx-auto px-6 text-center">
+
+      <div class="flex items-center justify-center gap-3 mb-6">
+        <div class="h-px w-12 bg-cyber opacity-60"></div>
+        <span class="font-condensed text-cyber tracking-widest uppercase text-sm">Digital Download</span>
+        <div class="h-px w-12 bg-cyber opacity-60"></div>
+      </div>
+
+      <h2 class="font-display text-5xl lg:text-7xl text-white mb-4 leading-none">OWN YOUR<br><span style="color:#00c8ff;" class="glow-cyan">PRIVACY</span></h2>
+
+      <p class="font-body text-slate text-lg mb-10 leading-relaxed" style="font-weight: 300;">
+        A one-time payment. No subscription. No upsell. Just the complete guide to building your sovereign digital infrastructure — yours to keep, update to, and own.
+      </p>
+
+      <!-- Price card -->
+      <div class="glow-box rounded-xl p-10 mb-8 inline-block w-full" style="background: rgba(13,20,32,0.9);">
+        <div class="flex items-end justify-center gap-2 mb-2">
+          <span class="font-display text-8xl" style="color: #00c8ff; text-shadow: 0 0 40px rgba(0,200,255,0.4);">£15</span>
+        </div>
+        <p class="font-condensed text-slate tracking-wider uppercase text-sm mb-8">One-Time · Instant PDF Download</p>
+
+        <!-- What you get -->
+        <div class="grid sm:grid-cols-2 gap-3 mb-10 text-left">
+          <div class="flex items-center gap-3">
+            <span style="color:#00c8ff;">✓</span>
+            <span class="font-body text-slate text-sm" style="font-weight:300;">38-page comprehensive guide</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span style="color:#00c8ff;">✓</span>
+            <span class="font-body text-slate text-sm" style="font-weight:300;">3 complete setup methods</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span style="color:#00c8ff;">✓</span>
+            <span class="font-body text-slate text-sm" style="font-weight:300;">Server hardening chapter</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span style="color:#00c8ff;">✓</span>
+            <span class="font-body text-slate text-sm" style="font-weight:300;">Full jargon-buster glossary</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span style="color:#00c8ff;">✓</span>
+            <span class="font-body text-slate text-sm" style="font-weight:300;">Troubleshooting & maintenance</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span style="color:#00c8ff;">✓</span>
+            <span class="font-body text-slate text-sm" style="font-weight:300;">Free updates via email</span>
+          </div>
+        </div>
+
+        <a href="https://payhip.com/b/g5xdw"
+   class="payhip-buy-button btn-cyber block w-full font-condensed font-semibold tracking-widest uppercase text-ink text-xl py-5 rounded-lg text-center"
+   data-theme="none"
+   data-product="g5xdw">
+  Get Instant Access — £15
+</a>
+
+        <p class="font-body text-slate/50 text-xs mt-5" style="font-weight: 300;">
+          Secure checkout via Payhip · PDF delivered instantly to your inbox · All major cards accepted
+        </p>
+      </div>
+
+      <!-- Savings callout -->
+      <p class="font-condensed text-slate/60 text-sm tracking-wide">
+        The average commercial VPN costs <span class="text-white">£10–£12/month</span>. This guide pays for itself in <span class="text-cyber">six weeks</span>.
+      </p>
+
+    </div>
+  </section>
+
+  <div class="cyber-divider"></div>
+
+  <!-- FOOTER -->
+  <footer class="py-12 px-6" style="background: #05080f;">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-8 mb-10">
+
+        <div>
+          <div class="font-display text-2xl text-white mb-1">RENEGADE</div>
+          <div class="font-condensed text-cyber text-sm tracking-widest uppercase mb-4">Publications</div>
+          <p class="font-body text-slate text-sm leading-relaxed" style="font-weight: 300;">A trading imprint of Definitive Ventures Group. Publishing practical digital independence guides for the modern UK internet user.</p>
+        </div>
+
+        <div>
+          <h4 class="font-condensed text-white font-semibold tracking-wider uppercase text-sm mb-4">The Guide</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="font-body text-slate/60 text-sm hover:text-cyber transition-colors" style="font-weight:300;">Table of Contents</a></li>
+            <li><a href="#" class="font-body text-slate/60 text-sm hover:text-cyber transition-colors" style="font-weight:300;">Three Methods Overview</a></li>
+            <li><a href="#buy" class="font-body text-slate/60 text-sm hover:text-cyber transition-colors" style="font-weight:300;">Buy The Guide</a></li>
+ <li><a href="privacy.html" class="font-body text-slate/60 text-sm hover:text-cyber transition-colors" style="font-weight:300;">Privacy</a></li>
+<li><a href="terms.html" class="font-body text-slate/60 text-sm hover:text-cyber transition-colors" style="font-weight:300;">Terms</a></li>
+
+
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-condensed text-white font-semibold tracking-wider uppercase text-sm mb-4">Legal</h4>
+          <ul class="space-y-2">
+            <li><span class="font-body text-slate/60 text-sm" style="font-weight:300;">© 2026 Renegade Publications</span></li>
+            <li><span class="font-body text-slate/60 text-sm" style="font-weight:300;">Independent UK Digital Publisher</span></li>
+            <li><span class="font-body text-slate/60 text-sm" style="font-weight:300;">Definitive Ventures Group</span></li>
+            <li><a href="mailto:info@renegadepublications.com" class="font-body text-slate/60 text-sm hover:text-cyber transition-colors" style="font-weight:300;">info@renegadepublications.com</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="cyber-divider mb-6"></div>
+
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-condensed tracking-wider text-slate/40 uppercase">
+        <span>For educational purposes · Legal use only · No illegal activity condoned</span>
+        <span>buildyourvpn.co.uk</span>
+      </div>
+    </div>
+  </footer>
+<script type="text/javascript" src="https://payhip.com/payhip.js"></script>
+
+
+</body>
+</html>
